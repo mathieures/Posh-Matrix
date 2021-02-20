@@ -1,3 +1,4 @@
+# Posh-Matrix v1.01 by mathieures
 function Start-Matrix {
     # Function to replicate a Matrix effect
     [CmdletBinding(DefaultParameterSetName='Time')]
