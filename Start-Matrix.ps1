@@ -1,4 +1,4 @@
-# Posh-Matrix v1.01 by mathieures
+# Posh-Matrix v1.02 by mathieures
 function Start-Matrix {
     # Function to replicate a Matrix effect
     [CmdletBinding(DefaultParameterSetName='Time')]
@@ -40,8 +40,8 @@ function Start-Matrix {
             [switch]$NoClearBefore, # Do not clear the screen before execution
         [Alias('NoClearA','NoCleanA','NCA')]
             [switch]$NoClearAfter, # Do not clear the screen after execution
-        [Alias('Adaptive','Adaptative','Resize')]
-            [switch]$AdaptiveSize
+        [Alias('NoAdaptive','NoAdaptative','NoAdapt','NoResize')]
+            [switch]$NoAdaptiveSize
     )
 
 
@@ -218,7 +218,7 @@ function Start-Matrix {
         if ($next -eq $maxVertic)
         {
             $next = 0
-            if ($AdaptiveSize -and $WS -ne $Host.UI.RawUI.WindowSize)
+            if (!($NoAdaptiveSize) -and $WS -ne $Host.UI.RawUI.WindowSize)
             {
                 $WS = $Host.UI.RawUI.WindowSize
                 # Resize the matrix
@@ -260,6 +260,6 @@ function Start-Matrix {
 
 # Start-Matrix
 # Start-Matrix 100 -FullScreen
-# Start-Matrix 10 -AdaptiveSize -NoClearBefore
-# Start-Matrix 70 -AdaptiveSize -DynamicErasing
+# Start-Matrix 10 -NoAdaptiveSize -NoClearBefore
+# Start-Matrix 70 -DynamicErasing
 # Start-Matrix -SleepTime 100 -DropChance 1 -StickChance 80 -Lines 1 -EraseQuota 60
