@@ -3,7 +3,7 @@ A Powershell implementation of the Matrix effect.
 
 ## Features
 - Parameters:
-	- **SleepTime**: Opposite of speed. Lower this parameter to make the program go faster.
+	- **SleepTime**: Opposite of speed. Lower this parameter to make the script run faster.
 	- **DropChance**: Chance a character will spawn spontaneously.
 	- **StickChance**: Chance a character will spawn if there is already a character above it.
 	- **Color**: The color used, from the default Powershell color list: `Black, DarkBlue, DarkGreen, DarkCyan, DarkRed, DarkMagenta, DarkYellow, Gray, DarkGray, Blue, Green, Cyan, Red, Magenta, Yellow, White`.
@@ -16,6 +16,9 @@ A Powershell implementation of the Matrix effect.
 	- **NoClearBefore**: Don't clear the screen before execution. Will keep the current on-screen characters (for example another command output).
 	- **NoClearAfter**: Don't clear the screen after execution. Will keep the colored characters displayed, and probably show the console prompt in the middle of them.
 	- **NoAdaptiveSize**: by default, if the window is resized during execution, the next loop will adapt and print characters depending on the new size. This switch disable this behaviour.
+- Keys:
+	- Press P while the script is running to pause it. Press P again to resume.
+	- Press any other key to exit.
 
 ## To-do
 - Make the cursor invisible
@@ -23,7 +26,7 @@ A Powershell implementation of the Matrix effect.
 - Balance the default parameters
 
 ## Known issues
-- The DynamicErasing switch slows the program down quite a bit
+- The DynamicErasing switch slows the script down quite a bit
 
 ## Update notes
 - v1.0: Initial release
