@@ -22,3 +22,7 @@ A Powershell implementation of the Matrix effect.
 
 ## Known issues
 - The DynamicErasing switch slows the program down quite a bit
+
+## Update notes
+- v1.0: Initial release
+- v1.01: Rearranged parameters, added examples

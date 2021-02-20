@@ -1,12 +1,11 @@
 function Start-Matrix {
-    # Tentative de faire le défilement vers le bas au lieu de vers le haut
     # Function to replicate a Matrix effect
     [CmdletBinding(DefaultParameterSetName='Time')]
     param(
-        [Parameter(ParameterSetName='Time', Position=0)]
         # Time: when the user specifies the SleepTime as first argument
-        [Parameter(ParameterSetName='Color', Position=1)]
+        [Parameter(ParameterSetName='Time', Position=0)]
         # Color: when the user specifies the color first, then SleepTime, etc
+        [Parameter(ParameterSetName='Color', Position=1)]
         [Alias('Sleep','S')]
             [int]$SleepTime = 15, # milliseconds
         [Parameter(ParameterSetName='Time', Position=1)]
@@ -17,23 +16,29 @@ function Start-Matrix {
         [Parameter(ParameterSetName='Color', Position=3)]
         [Alias('Stick','SC')]
             [int]$StickChance = 60, # Chance a character has to appear when there is one above it (percentage)
-        [Parameter(ParameterSetName='Time', Position=3)]
         [Parameter(ParameterSetName='Color', Position=0, Mandatory)]
         [Alias('Colour','C')]
-            [string]$Color = 'Green',
-        ## Other, non-positional, parameters ##
+            [string]$Color = 'Green', # Color used for all the characters
+        [Parameter(ParameterSetName='Time', Position=3)]
+        [Parameter(ParameterSetName='Color', Position=4)]
+        [Alias('LinesToReplace','Lines','LTR','L')]
+            [int]$NumberOfLinesToReplace = 10, # Number of lines where to erase characters
+        [Parameter(ParameterSetName='Time', Position=4)]
+        [Parameter(ParameterSetName='Color', Position=5)]
         [Alias('Erase','Quota','EQ')]
             [int]$EraseQuota = 5, # Percentage of characters erased in each selected line; depends on the number of characters
-        [Alias('LeaveUntouched','Leave','Untouched')]
+        
+        ## Other, non-positional, parameters ##
+        [Alias('LeaveUntouched','Leave','Untouched','LUC')]
             [int]$LeaveUntouchedChance = 20, # Chance of keeping a character untouched when the new line is created (percentage)
-        [Alias('Lines','L')]
-            [int]$NumberOfLinesToReplace = 10, # Number of lines where to erase characters
         [Alias('Dynamic','DE')]
             [switch]$DynamicErasing, # Dynamic mode to erase characters: more lines => more erasing. Overwrites $NumberOfLinesToReplace
         [Alias('Full','FS','F')]
             [switch]$FullScreen, # Toggle fullscreen mode at the beginning and at the end
-        [Alias('NoClear','NoClean')]
-            [switch]$NoClearScreenAfterExecution, # Clear the screen after execution to not let the characters
+        [Alias('NoClearB','NoCleanB','NCB')]
+            [switch]$NoClearBefore, # Do not clear the screen before execution
+        [Alias('NoClearA','NoCleanA','NCA')]
+            [switch]$NoClearAfter, # Do not clear the screen after execution
         [Alias('Adaptive','Adaptative','Resize')]
             [switch]$AdaptiveSize
     )
@@ -66,7 +71,6 @@ function Start-Matrix {
     # Note: doesn't work in Windows Terminal
 
 
-
     # Initialize the matrix to an array of strings, all full of spaces
     $matrix = @(
         for ($i=0; $i -lt $maxVertic; $i++) { ' '*$maxHoriz }
@@ -75,7 +79,7 @@ function Start-Matrix {
     $next = 0
 
     # Clear the console to let all the place for the effect, although this could be an unwanted behaviour
-    Clear-Host
+    if (!($NoClearBefore)) { Clear-Host }
 
     # Note: the label is necessary to break this precise loop from the nested loops
     :mainLoop while ($true)
@@ -248,7 +252,13 @@ function Start-Matrix {
     # Reset the buffer size (warning: this will fail if the window is resized during execution)
     # $host.UI.RawUI.BufferSize = $oldBufferSize
     # Note: doesn't work in Windows Terminal
-    if (!($NoClearScreenAfterExecution)) { Clear-Host }
+    if (!($NoClearAfter)) { Clear-Host }
 }
 
-# Start-Matrix 10 -AdaptiveSize
+# Examples of execution:
+
+# Start-Matrix
+# Start-Matrix 100 -FullScreen
+# Start-Matrix 10 -AdaptiveSize -NoClearBefore
+# Start-Matrix 70 -AdaptiveSize -DynamicErasing
+# Start-Matrix -SleepTime 100 -DropChance 1 -StickChance 80 -Lines 1 -EraseQuota 60
