@@ -26,9 +26,9 @@ A Powershell implementation of the Matrix effect.
 - Balance the default parameters
 
 ## Known issues
-- The DynamicErasing switch slows the script down quite a bit
+- The `-DynamicErasing` switch slows the script down quite a bit
 
 ## Update notes
 - v1.0: Initial release
 - v1.01: Rearranged parameters, added examples
-- v1.02: Changed the AdaptiveSize switch to NoAdaptiveSize, to enable the adaptiveness by default
+- v1.02: Changed the `-AdaptiveSize` switch to `-NoAdaptiveSize`, to enable the adaptiveness by default
