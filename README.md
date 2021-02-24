@@ -21,14 +21,21 @@ A Powershell implementation of the Matrix effect.
 	- Press any other key to exit.
 
 ## To-do
-- Make the cursor invisible
 - Add an option to specify a custom characters set
 - Balance the default parameters
 
 ## Known issues
 - The `-DynamicErasing` switch slows the script down quite a bit
 
+## Execution examples
+- `Start-Matrix` (starts the script with the default parameters)
+- `Start-Matrix 100 -FullScreen` (equivalent of `Start-Matrix -SleepTime 100 -FullScreen`)
+- `Start-Matrix 10 -NoAdaptiveSize -NoClearBefore`
+- `Start-Matrix 70 -DynamicErasing`
+- `Start-Matrix -SleepTime 100 -DropChance 1 -StickChance 80 -Lines 1 -EraseQuota 60` (equivalent of)
+
 ## Changelog
 - v1.0: Initial release
 - v1.01: Rearranged parameters, added examples
 - v1.02: Changed the `-AdaptiveSize` switch to `-NoAdaptiveSize`, to enable the adaptiveness by default
+- v1.03: Made the cursor invisible

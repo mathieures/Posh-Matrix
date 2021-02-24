@@ -1,4 +1,4 @@
-# Posh-Matrix v1.02 by mathieures
+# Posh-Matrix v1.03 by mathieures
 function Start-Matrix {
     # Function to replicate a Matrix effect
     [CmdletBinding(DefaultParameterSetName='Time')]
@@ -52,7 +52,9 @@ function Start-Matrix {
     # The characters supported by the Consolas font (plus some more)
     $supportedChars = ($MINUNICODE,126),(161,1299),(7425,$MAXUNICODE) # ,(7681,etc)
     # $notSupportedChars = (127,160),(1300,7424),(7611,7680)
-
+    
+    # Save the console cursor visibility
+    $oldCursorVisible = [Console]::CursorVisible
 
     ## Toggle fullscreen ##
 
@@ -210,6 +212,7 @@ function Start-Matrix {
 
         [Console]::SetCursorPosition(0, $next)
         $matrix[$next] = $newLine
+        [Console]::CursorVisible = $false
         Write-Host $newLine -Foreground $Color
         
         $prevLine = $newLine
@@ -254,12 +257,6 @@ function Start-Matrix {
     # $host.UI.RawUI.BufferSize = $oldBufferSize
     # Note: doesn't work in Windows Terminal
     if (!($NoClearAfter)) { Clear-Host }
+    # Restore the previous cursor visibility
+    [Console]::CursorVisible = $oldCursorVisible
 }
-
-# Examples of execution:
-
-# Start-Matrix
-# Start-Matrix 100 -FullScreen
-# Start-Matrix 10 -NoAdaptiveSize -NoClearBefore
-# Start-Matrix 70 -DynamicErasing
-# Start-Matrix -SleepTime 100 -DropChance 1 -StickChance 80 -Lines 1 -EraseQuota 60
