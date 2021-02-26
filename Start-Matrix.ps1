@@ -1,4 +1,4 @@
-# Posh-Matrix v1.03 by mathieures
+# Posh-Matrix v2.0 by mathieures
 function Start-Matrix {
     # Function to replicate a Matrix effect
     [CmdletBinding(DefaultParameterSetName='Time')]
@@ -8,7 +8,7 @@ function Start-Matrix {
         # Color: when the user specifies the color first, then SleepTime, etc
         [Parameter(ParameterSetName='Color', Position=1)]
         [Alias('Sleep','S')]
-            [int]$SleepTime = 15, # milliseconds
+            [int]$SleepTime = 40, # milliseconds
         [Parameter(ParameterSetName='Time', Position=1)]
         [Parameter(ParameterSetName='Color', Position=2)]
         [Alias('Drop','DC')]
@@ -17,37 +17,33 @@ function Start-Matrix {
         [Parameter(ParameterSetName='Color', Position=3)]
         [Alias('Stick','SC')]
             [int]$StickChance = 60, # Chance a character has to appear when there is one above it (percentage)
+        [Parameter(ParameterSetName='Time', Position=3)]
         [Parameter(ParameterSetName='Color', Position=0, Mandatory)]
         [Alias('Colour','C')]
             [string]$Color = 'Green', # Color used for all the characters
-        [Parameter(ParameterSetName='Time', Position=3)]
-        [Parameter(ParameterSetName='Color', Position=4)]
-        [Alias('LinesToReplace','Lines','LTR','L')]
-            [int]$NumberOfLinesToReplace = 10, # Number of lines where to erase characters
         [Parameter(ParameterSetName='Time', Position=4)]
-        [Parameter(ParameterSetName='Color', Position=5)]
-        [Alias('Erase','Quota','EQ')]
-            [int]$EraseQuota = 5, # Percentage of characters erased in each selected line; depends on the number of characters
+        [Parameter(ParameterSetName='Color', Position=4)]
+        [Alias('LeaveUntouched','Leave','Untouched','LUC','L')]
+            [int]$LeaveUntouchedChance = 20, # Chance of keeping a character untouched when the new line is created (percentage)
         
         ## Other, non-positional, parameters ##
-        [Alias('LeaveUntouched','Leave','Untouched','LUC')]
-            [int]$LeaveUntouchedChance = 20, # Chance of keeping a character untouched when the new line is created (percentage)
-        [Alias('Dynamic','DE')]
-            [switch]$DynamicErasing, # Dynamic mode to erase characters: more lines => more erasing. Overwrites $NumberOfLinesToReplace
         [Alias('Full','FS','F')]
             [switch]$FullScreen, # Toggle fullscreen mode at the beginning and at the end
-        [Alias('NoClearB','NoCleanB','NCB')]
+        [Alias('NCB')]
             [switch]$NoClearBefore, # Do not clear the screen before execution
-        [Alias('NoClearA','NoCleanA','NCA')]
+        [Alias('NCA')]
             [switch]$NoClearAfter, # Do not clear the screen after execution
         [Alias('NoAdaptive','NoAdaptative','NoAdapt','NoResize')]
-            [switch]$NoAdaptiveSize
+            [switch]$NoAdaptiveSize, # Disable the auto-resizing of the effect when the window shape is changed
+        [Alias('Rainbow','M')]
+            [switch]$Multicolor # Random colors for all characters. Overwrites $Color
     )
 
 
     # Constants
     $MINUNICODE = 21
     $MAXUNICODE = 7610
+    if ($Multicolor) { $colors = 16, 231 }
 
     # The characters supported by the Consolas font (plus some more)
     $supportedChars = ($MINUNICODE,126),(161,1299),(7425,$MAXUNICODE) # ,(7681,etc)
@@ -67,19 +63,13 @@ function Start-Matrix {
     $maxHoriz = $windowWidth - 1
     $maxVertic = $windowHeight - 1
 
+    # Initialize the matrix to a list of lists of chars (all spaces)
+    $matrix = [Collections.Generic.List[Object]]::New($maxVertic)
+    1..$maxVertic | % { $matrix.Add([Collections.Generic.List[Char]]::New(' '*$maxHoriz)) }
 
-    ## Resize the buffer to not overload it ## (not needed, but may be useful)
-    # $oldBufferSize = $host.UI.RawUI.BufferSize
-    # $host.UI.RawUI.BufferSize = New-Object System.Management.Automation.Host.Size($windowWidth,$windowHeight)
-    # Note: doesn't work in Windows Terminal
-
-
-    # Initialize the matrix to an array of strings, all full of spaces
-    $matrix = @(
-        for ($i=0; $i -lt $maxVertic; $i++) { ' '*$maxHoriz }
-    )
-    $prevLine = $matrix[0]
-    $next = 0
+    # Note: we can create it there even with adaptive size, Lists being automatically resized
+    $currentLine = 0
+    $prevLine = $matrix[0] # a list of chars ; not necessary, but useful
 
     # Clear the console to let all the place for the effect, although this could be an unwanted behaviour
     if (!($NoClearBefore)) { Clear-Host }
@@ -111,7 +101,7 @@ function Start-Matrix {
                         {
                             [Console]::SetCursorPosition(0,$maxVertic)
                             [Console]::Write(' '*8) # Erase the pause message
-                            [Console]::SetCursorPosition(0,$next) # a verif
+                            # Note: no need to replace the cursor since it is done before every writing
                             break
                         }
                         else { if ($FullScreen) { [System.Windows.Forms.SendKeys]::SendWait("{F11}") } ; break mainLoop }
@@ -124,138 +114,159 @@ function Start-Matrix {
             else { if ($FullScreen) { [System.Windows.Forms.SendKeys]::SendWait("{F11}") } ; break mainLoop }
         }
 
-        ## Fill the new line with characters or spaces ##
-        
-        $newLine = ''
-        for ($j = 0; $j -lt $maxHoriz; $j++)
+        ## Fill the line with characters or spaces ##
+
+        # Loop through the columns
+        for ($j = 0; $j -lt $matrix[$currentLine].Count; $j++)
         {
-            # If there was a character, try to keep it
-            # Note: I don't know why indexing $matrix[$next] sometimes gives $null, so I added a condition
-            if (($matrix[$next][$j] -ne $null) -and ($matrix[$next][$j] -ne ' ') -and (Get-Random -Maximum 100) -lt $LeaveUntouchedChance)
+            # si on est sur un caractère, on le garde ou l'enlève
+            if ($matrix[$currentLine][$j] -ne ' ')
             {
-                $newLine += $matrix[$next][$j]
-            }
-            # If there was nothing or the probability was too low, try to create a new one
-            elseif ((Get-Random -Maximum 100) -lt $DropChance -or (
-                ($prevLine[$j] -ne ' ') -and ((Get-Random -Maximum 100) -lt $StickChance)))
-            {
-                $charIsGood = $false
-                do {
-                    $uni = Get-Random -Minimum $MINUNICODE -Maximum $MAXUNICODE
-                    foreach ($interval in $supportedChars)
-                    {
-                        if ($uni -ge $interval[0] -and
-                            $uni -le $interval[1])
-                        {
-                            $charIsGood = $true
-                            break # Note: exit only foreach loop
-                        }
-                    }
-                } while (!($charIsGood))
-
-                $newLine += [char]$uni # Convert the unicode number into a character
-            }
-            else { $newLine += ' ' }
-
-        }
-
-        ## Randomly remove characters from past lines ##
-
-        if ($EraseQuota -gt 0)
-        {
-            if ($DynamicErasing) { $NumberOfLinesToReplace = [int]($next / 2) + 1 }
-
-            # Pick random lines
-            # $linesToReplace = @(Get-Random -Maximum ($next + 1) -Count $NumberOfLinesToReplace) # $next+1 to avoid Maximum = 0
-            # OR:
-            $linesToReplace = @((Get-Random -Maximum ($next + 1) -Count $NumberOfLinesToReplace) | Sort-Object)
-            # Note: Sort-Object makes the program slightly faster
-
-            foreach ($lineToReplace in $linesToReplace)
-            {
-                # Look for the characters' positions
-                $currentLine = $matrix[$lineToReplace]
-                $colsWithChar = (0..$currentLine.Length | Where-Object { $currentLine[$_] -ne ' ' }) # Columns where there is a character
-
-                # Do something only if the line has characters
-                if ($colsWithChar.Count -ne 0)
+                # Si la proba est trop basse, on enlève le char
+                if (!((Get-Random -Maximum 100) -lt $LeaveUntouchedChance))
                 {
-                    $numberOfColsToReplace = [int](($colsWithChar.Count * $EraseQuota) / 100)
-                    # If the EraseQuota is not high enough but still > 0, erase only 1 character
-                    if ($numberOfColsToReplace -eq 0) { $numberOfColsToReplace = 1 }
-
-                    # Pick random columns
-                    # $colsToReplace = @(Get-Random -InputObject $colsWithChar -Count $numberOfColsToReplace)
-                    # OR:
-                    $colsToReplace = @((Get-Random -InputObject $colsWithChar -Count $numberOfColsToReplace) | Sort-Object)
-                    # Note: Sort-Object makes the program slightly faster
-
-                    # Actually replace the characters in the picked columns
-                    foreach ($col in $colsToReplace)
+                    $matrix[$currentLine][$j] = ' '
+                    if ($Multicolor)
                     {
-                        # Terrible coding, but I still have to figure out the formula for SubString…
+                        # Fails if the window is resized, so exit the loop
                         try {
-                            $currentLine = $currentLine.SubString(0, $col) + ' ' + $currentLine.SubString($col + 1)
-                            # Note: since columns start at 0, the length is $col, not $col-1
+                            [Console]::SetCursorPosition($j, $currentLine)
                         }
-                        catch {
-                            # Do nothing
+                        catch [System.Management.Automation.MethodInvocationException] {
+                            break
                         }
+                        [Console]::CursorVisible = $false
+                        Write-Host ' ' -NoNewLine
                     }
-                    $matrix[$lineToReplace] = $currentLine
-                    # Move to the right position to replace the line
-                    [Console]::SetCursorPosition(0, $lineToReplace)
-                    Write-Host $matrix[$lineToReplace] -Foreground $Color
+                }
+                # Else, do nothing
+            }
+            else
+            {
+                # If a character was above, we may stick another one to it; if there wasn't, we may drop one
+                if (($prevLine[$j] -ne ' ' -and (Get-Random -Maximum 100) -lt $StickChance) -or
+                    (Get-Random -Maximum 100) -lt $DropChance)
+                {
+                    $charIsGood = $false
+                    do {
+                        $uni = Get-Random -Minimum $MINUNICODE -Maximum $MAXUNICODE
+                        foreach ($interval in $supportedChars)
+                        {
+                            if ($uni -ge $interval[0] -and
+                                $uni -le $interval[1])
+                            {
+                                $charIsGood = $true
+                                break # Note: exit only foreach loop
+                            }
+                        }
+                    } while (!($charIsGood))
+
+                    $matrix[$currentLine][$j] = [char]$uni
+                    if ($Multicolor)
+                    {
+                        # Fails if the window is resized, so exit the for loop
+                        try {
+                            [Console]::SetCursorPosition($j, $currentLine)
+                        }
+                        catch [System.Management.Automation.MethodInvocationException] {
+                            break
+                        }
+                        [Console]::CursorVisible = $false
+                        $randomColor = Get-Random -Minimum $colors[0] -Maximum ($colors[1] + 1)
+                        Write-Host "`e[38;5;${randomColor}m$($matrix[$currentLine][$j])" -NoNewLine # 38: foreground
+                    }
+                    # Else, do nothing yet (the whole line is written afterwards)
                 }
             }
         }
 
-        [Console]::SetCursorPosition(0, $next)
-        $matrix[$next] = $newLine
-        [Console]::CursorVisible = $false
-        Write-Host $newLine -Foreground $Color
-        
-        $prevLine = $newLine
-        # Note: $prevLine could be replaced by `[Math]::Abs($next-1) % $maxVertic` (I think)
-        $next++
-        if ($next -eq $maxVertic)
+        if (!$Multicolor)
         {
-            $next = 0
-            if (!($NoAdaptiveSize) -and $WS -ne $Host.UI.RawUI.WindowSize)
-            {
-                $WS = $Host.UI.RawUI.WindowSize
-                # Resize the matrix
-                $minHeigth = [Math]::Min($windowHeight, $WS.Height)
-                $minWidth = [Math]::Min($windowWidth, $WS.Width)
-                $maxHeight = [Math]::Max($windowHeight, $WS.Height)
-                $maxWidth = [Math]::Max($windowWidth, $WS.Width)
-                $diffWidth = [Math]::Abs($windowWidth - $WS.Width)
+            # Fails if the window is resized, so don't Write if it does
+            try {
+                [Console]::SetCursorPosition(0, $currentLine)
+                [Console]::CursorVisible = $false
+                Write-Host $matrix[$currentLine] -Foreground $Color -NoNewLine # The entire line
+            }
+            catch [System.Management.Automation.MethodInvocationException] {
+                # Do nothing
+            }
+        }
 
-                $matrix = @(
-                    # From 0 to the biggest common line, we extend lines of how much is between the two
-                    for ($i = 0; $i -lt $minHeigth; $i++)
+        # After all columns are parsed
+        $prevLine = $matrix[$currentLine]
+
+        # If the currentLine is 'in the middle' of the screen
+        if ($currentLine -ne ($maxVertic - 1))
+        {
+            $currentLine++
+        }
+        # Else reset the currentLine to the top of the window
+        else
+        {
+            $currentLine = 0
+            
+            # If the window size is not the same as before
+            if (!$NoAdaptiveSize -and $WS -ne $Host.UI.RawUI.WindowSize)
+            {
+                $WS = $Host.UI.RawUI.WindowSize # The new size
+
+                $diffHeight = $WS.Height - $windowHeight
+                $diffWidth = $WS.Width - $windowWidth
+
+                # If the difference is positive, the window is taller so we add lines to the matrix
+                if ($diffHeight -gt 0)
+                {
+                    # Add $diffHeight lines
+                    for ($i = 0; $i -lt $diffHeight; $i++)
                     {
-                        $matrix[$i] + (' '*$diffWidth) # Not entirely sure about the diff formula, but totally works
+                        $matrix.Add([Collections.Generic.List[Char]]::New(' '*$maxHoriz))
+                        # Note: if Width changed too, the lines will be resized in the second `if`, so $maxHoriz is good
                     }
-                    # The rest, being 0 or the difference
-                    for ($i = $minHeigth; $i -lt $maxHeight; $i++)
+                }
+                # Else there are less lines now, so we reduce the matrix
+                else
+                {
+                    $newHeight = $matrix.Count + $diffHeight # '+'' since $diffHeight is negative
+                    $end = [Math]::Abs($diffHeight)
+                    # Remove $diffHeight lines
+                    $matrix.RemoveRange($newHeight, $end) # truncate the list so the length is $newHeight
+                }
+
+                # If the difference is positive, the window is larger so we add columns to the matrix
+                if ($diffWidth -gt 0)
+                {
+                    # Loop through the lines to add spaces
+                    for ($i = 0; $i -lt $matrix.Count; $i++)
                     {
-                        ' '*$maxWidth
+                        $matrix[$i].AddRange(' '*$diffWidth)
                     }
-                )
+                }
+                # Else there are less characters now, so we reduce the lines' length
+                else
+                {
+                    $newWidth = $matrix[0].Count + $diffWidth # '+'' since $diffWidth is negative
+                    $end = [Math]::Abs($diffWidth)
+
+                    # Loop through the lines to remove characters
+                    for ($i = 0; $i -lt $matrix.Count; $i++)
+                    {
+                        $matrix[$i].RemoveRange($newWidth, $end) # truncate the list so the length is $newWidth
+                    }
+                }                
                 $prevLine = $matrix[0]
-                
-                $windowWidth, $windowHeight = $WS.Width, $WS.Height
-                $maxHoriz = $windowWidth - 1
+
+                $windowHeight, $windowWidth = $WS.Height, $WS.Width
                 $maxVertic = $windowHeight - 1
+                $maxHoriz = $windowWidth - 1
             }
         }
 
         Start-Sleep -Milliseconds $SleepTime
     }
-    # Reset the buffer size (warning: this will fail if the window is resized during execution)
-    # $host.UI.RawUI.BufferSize = $oldBufferSize
-    # Note: doesn't work in Windows Terminal
+    
+    ## After the mainLoop ##
+
     if (!($NoClearAfter)) { Clear-Host }
     # Restore the previous cursor visibility
     [Console]::CursorVisible = $oldCursorVisible

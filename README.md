@@ -7,15 +7,13 @@ A Powershell implementation of the Matrix effect.
 	- **DropChance**: Chance a character will spawn spontaneously.
 	- **StickChance**: Chance a character will spawn if there is already a character above it.
 	- **Color**: The color used, from the default Powershell color list: `Black, DarkBlue, DarkGreen, DarkCyan, DarkRed, DarkMagenta, DarkYellow, Gray, DarkGray, Blue, Green, Cyan, Red, Magenta, Yellow, White`.
-	- **EraseQuota**: Percentage of characters erased from each randomly picked line.
-	- **LeaveUntouchedChance**: Chance of keeping a character intact when the new ones are created (replacing others).
-	- **NumberOfLinesToReplace**: Randomly pick this much lines to erase characters from.
+	- **LeaveUntouchedChance**: Chance of keeping a character intact when the new ones are created. Influences the rate at which characters are erased too.
 - Switches:
-	- **DynamicErasing**: Always erase half of the lines above the new one. Overwrites the NumberOfLinesToReplace parameter.
 	- **FullScreen**: Toggle fullscreen mode before and after the execution (unless `Ctrl+C` is pressed; although it could be fixable by wrapping a `try-catch` block around the mainloop).
 	- **NoClearBefore**: Don't clear the screen before execution. Will keep the current on-screen characters (for example another command output).
 	- **NoClearAfter**: Don't clear the screen after execution. Will keep the colored characters displayed, and probably show the console prompt in the middle of them.
 	- **NoAdaptiveSize**: by default, if the window is resized during execution, the next loop will adapt and print characters depending on the new size. This switch disable this behaviour.
+	- **Multicolor**: pick a random color for every character. Overwrites $Color.
 - Keys:
 	- Press P while the script is running to pause it. Press P again to resume.
 	- Press any other key to exit.
@@ -23,19 +21,29 @@ A Powershell implementation of the Matrix effect.
 ## To-do
 - Add an option to specify a custom characters set
 - Balance the default parameters
+- Fix the Writing issue (copying the Writing process from the `Multicolor` mode would work, but would slow the script down)
 
 ## Known issues
-- The `-DynamicErasing` switch slows the script down quite a bit
+- When the `-Multicolor` switch is not present, a line is created and erased immediately everytime; although it could have an aesthetic effect, I think it is too much. It also makes the 'modifying-line' more obvious. (Note that it is because the Writing process is different in the `-Multicolor` mode, but also slower)
 
 ## Execution examples
 - `Start-Matrix` (starts the script with the default parameters)
 - `Start-Matrix 100 -FullScreen` (equivalent of `Start-Matrix -SleepTime 100 -FullScreen`)
 - `Start-Matrix 10 -NoAdaptiveSize -NoClearBefore`
-- `Start-Matrix 70 -DynamicErasing`
-- `Start-Matrix -SleepTime 100 -DropChance 1 -StickChance 80 -Lines 1 -EraseQuota 60` (equivalent of)
+- `Start-Matrix -DropChance 1 -StickChance 60 -Leave 75`
+- `Start-Matrix -DropChance 1 -StickChance 60 -Untouched 65 -Multicolor`
+- `Start-Matrix -SleepTime 100 -DropChance 1 -StickChance 80 -LeaveUntouchedChance 60`
 
 ## Changelog
-- v1.0: Initial release
+- **v1.0**: Initial release
 - v1.01: Rearranged parameters, added examples
 - v1.02: Changed the `-AdaptiveSize` switch to `-NoAdaptiveSize`, to enable the adaptiveness by default
 - v1.03: Made the cursor invisible
+- **v2.0**:
+	- Entirely changed the data structure: it is now a List of Lists of Characters (or *matrix*). The script is in consequence much faster.
+	- Since `LeaveUntouchedChance` handles the erasing now, removed the following parameters:
+		- `NumberOfLinesToReplace`
+		- `EraseQuota`
+		- `DynamicErasing`
+	- Added the `-Multicolor` switch.
+	- Removed some redondant Parameters' Aliases
