@@ -47,3 +47,4 @@ A Powershell implementation of the Matrix effect.
 		- `DynamicErasing`
 	- Added the `-Multicolor` switch.
 	- Removed some redondant Parameters' Aliases
+- v2.01: Fixes issue #1
