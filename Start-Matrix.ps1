@@ -1,4 +1,4 @@
-# Posh-Matrix v2.0 by mathieures
+# Posh-Matrix v2.01 by mathieures
 function Start-Matrix {
     # Function to replicate a Matrix effect
     [CmdletBinding(DefaultParameterSetName='Time')]
@@ -186,7 +186,7 @@ function Start-Matrix {
             try {
                 [Console]::SetCursorPosition(0, $currentLine)
                 [Console]::CursorVisible = $false
-                Write-Host $matrix[$currentLine] -Foreground $Color -NoNewLine # The entire line
+                Write-Host "$($matrix[$currentLine] -join '')" -Foreground $Color -NoNewLine # The entire line
             }
             catch [System.Management.Automation.MethodInvocationException] {
                 # Do nothing
