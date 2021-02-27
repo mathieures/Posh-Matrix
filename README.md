@@ -23,9 +23,6 @@ A Powershell implementation of the Matrix effect.
 - Balance the default parameters
 - Fix the Writing issue (copying the Writing process from the `Multicolor` mode would work, but would slow the script down)
 
-## Known issues
-- When the `-Multicolor` switch is not present, a line is created and erased immediately everytime; although it could have an aesthetic effect, I think it is too much. It also makes the 'modifying-line' more obvious. (Note that it is because the Writing process is different in the `-Multicolor` mode, but also slower)
-
 ## Execution examples
 - `Start-Matrix` (starts the script with the default parameters)
 - `Start-Matrix 100 -FullScreen` (equivalent of `Start-Matrix -SleepTime 100 -FullScreen`)
