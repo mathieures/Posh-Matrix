@@ -45,3 +45,4 @@ A Powershell implementation of the Matrix effect.
 	- Added the `-Multicolor` switch.
 	- Removed some redondant Parameters' Aliases
 - v2.01: Fixes issue #1
+- v2.02: Balanced the default parameters a little

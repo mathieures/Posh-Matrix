@@ -1,4 +1,4 @@
-# Posh-Matrix v2.01 by mathieures
+# Posh-Matrix v2.02 by mathieures
 function Start-Matrix {
     # Function to replicate a Matrix effect
     [CmdletBinding(DefaultParameterSetName='Time')]
@@ -8,15 +8,15 @@ function Start-Matrix {
         # Color: when the user specifies the color first, then SleepTime, etc
         [Parameter(ParameterSetName='Color', Position=1)]
         [Alias('Sleep','S')]
-            [int]$SleepTime = 40, # milliseconds
+            [int]$SleepTime = 50, # milliseconds
         [Parameter(ParameterSetName='Time', Position=1)]
         [Parameter(ParameterSetName='Color', Position=2)]
         [Alias('Drop','DC')]
-            [int]$DropChance = 5, # Chance a character has to be created spontaneously (percentage)
+            [int]$DropChance = 2, # Chance a character has to be created spontaneously (percentage)
         [Parameter(ParameterSetName='Time', Position=2)]
         [Parameter(ParameterSetName='Color', Position=3)]
         [Alias('Stick','SC')]
-            [int]$StickChance = 60, # Chance a character has to appear when there is one above it (percentage)
+            [int]$StickChance = 55, # Chance a character has to appear when there is one above it (percentage)
         [Parameter(ParameterSetName='Time', Position=3)]
         [Parameter(ParameterSetName='Color', Position=0, Mandatory)]
         [Alias('Colour','C')]
@@ -24,7 +24,7 @@ function Start-Matrix {
         [Parameter(ParameterSetName='Time', Position=4)]
         [Parameter(ParameterSetName='Color', Position=4)]
         [Alias('LeaveUntouched','Leave','Untouched','LUC','L')]
-            [int]$LeaveUntouchedChance = 20, # Chance of keeping a character untouched when the new line is created (percentage)
+            [int]$LeaveUntouchedChance = 30, # Chance of keeping a character untouched when the new line is created (percentage)
         
         ## Other, non-positional, parameters ##
         [Alias('Full','FS','F')]
