@@ -46,3 +46,4 @@ A Powershell implementation of the Matrix effect.
 	- Removed some redondant Parameters' Aliases
 - v2.01: Fixes issue #1
 - v2.02: Balanced the default parameters a little
+- v2.03: Fixed error for PowerShell 5

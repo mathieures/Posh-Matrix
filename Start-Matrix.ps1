@@ -1,4 +1,4 @@
-# Posh-Matrix v2.02 by mathieures
+# Posh-Matrix v2.03 by mathieures
 function Start-Matrix {
     # Function to replicate a Matrix effect
     [CmdletBinding(DefaultParameterSetName='Time')]
@@ -21,8 +21,7 @@ function Start-Matrix {
         [Parameter(ParameterSetName='Color', Position=0, Mandatory)]
         [Alias('Colour','C')]
             [string]$Color = 'Green', # Color used for all the characters
-        [Parameter(ParameterSetName='Time', Position=4)]
-        [Parameter(ParameterSetName='Color', Position=4)]
+        [Parameter(Position=4)]
         [Alias('LeaveUntouched','Leave','Untouched','LUC','L')]
             [int]$LeaveUntouchedChance = 30, # Chance of keeping a character untouched when the new line is created (percentage)
         
@@ -65,7 +64,7 @@ function Start-Matrix {
 
     # Initialize the matrix to a list of lists of chars (all spaces)
     $matrix = [Collections.Generic.List[Object]]::New($maxVertic)
-    1..$maxVertic | % { $matrix.Add([Collections.Generic.List[Char]]::New(' '*$maxHoriz)) }
+    1..$maxVertic | % { $matrix.Add([Collections.Generic.List[Char]]::New(' '*$maxHoriz)) }
 
     # Note: we can create it there even with adaptive size, Lists being automatically resized
     $currentLine = 0
