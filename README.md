@@ -47,3 +47,6 @@ A Powershell implementation of the Matrix effect.
 - v2.01: Fixes issue #1
 - v2.02: Balanced the default parameters a little
 - v2.03: Fixed error for PowerShell 5
+
+## Example of execution
+https://user-images.githubusercontent.com/71087433/114935043-fc1d4300-9e3a-11eb-9b21-f8fc38101f33.mov
