@@ -1,6 +1,10 @@
 # Posh-Matrix
 A Powershell implementation of the Matrix effect.
 
+## Usage
+- `. .\Start-Matrix.ps1` to import the function
+- `Start-Matrix …` to use
+
 ## Features
 - Parameters:
 	- **SleepTime**: Opposite of speed. Lower this parameter to make the script run faster.
