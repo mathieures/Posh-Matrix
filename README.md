@@ -2,8 +2,8 @@
 A Powershell implementation of the Matrix effect.
 
 ## Usage
-- `. .\Start-Matrix.ps1` to import the function
-- `Start-Matrix [args]` to use
+1. `. .\Start-Matrix.ps1` to import the function
+2. `Start-Matrix [args]` to use
 
 ## Features
 - Parameters:
