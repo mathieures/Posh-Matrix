@@ -38,11 +38,32 @@ function Start-Matrix {
             [switch]$Multicolor # Random colors for all characters. Overwrites $Color
     )
 
+    ## Toggle fullscreen ##
+
+    Add-Type -AssemblyName System.Windows.Forms
+    if ($FullScreen) {
+        [System.Windows.Forms.SendKeys]::SendWait("{F11}")
+        # Start-Sleep -Milliseconds 100 # Wait a bit to get the right WindowSize afterwards
+        [Threading.Thread]::Sleep(100) # Wait a bit to get the right WindowSize afterwards
+    }
+
+    # Window info
+    $WS = $Host.UI.RawUI.WindowSize
+    $windowWidth, $windowHeight = $WS.Width, $WS.Height
+    $maxHoriz = $windowWidth - 1
+    $maxVertic = $windowHeight - 1
 
     # Constants
     $MINUNICODE = 21
     $MAXUNICODE = 7610
-    if ($Multicolor) { $colors = 16, 231 }
+    # if ($Multicolor) { $colors = 16, 231}
+    if ($Multicolor) {
+        $colors = 16, 231
+        $randomColors = $colors[0]..$colors[1] | Sort-Object {Get-Random}
+    }
+
+    # Variables
+    $randomGen = [Random]::New() # Immensely faster than Get-Random
 
     # The characters supported by the Consolas font (plus some more)
     $supportedChars = ($MINUNICODE,126),(161,1299),(7425,$MAXUNICODE) # ,(7681,etc)
@@ -51,20 +72,11 @@ function Start-Matrix {
     # Save the console cursor visibility
     $oldCursorVisible = [Console]::CursorVisible
 
-    ## Toggle fullscreen ##
-
-    Add-Type -AssemblyName System.Windows.Forms
-    if ($FullScreen) { [System.Windows.Forms.SendKeys]::SendWait("{F11}") }
-    Start-Sleep -Milliseconds 100 # Wait a bit to get the right WindowSize afterwards
-
-    $WS = $Host.UI.RawUI.WindowSize
-    $windowWidth, $windowHeight = $WS.Width, $WS.Height
-    $maxHoriz = $windowWidth - 1
-    $maxVertic = $windowHeight - 1
-
     # Initialize the matrix to a list of lists of chars (all spaces)
     $matrix = [Collections.Generic.List[Object]]::New($maxVertic)
-    1..$maxVertic | % { $matrix.Add([Collections.Generic.List[Char]]::New(' '*$maxHoriz)) }
+    for ($i = 0; $i -lt $maxVertic; ++$i) {
+        $matrix.Add([Collections.Generic.List[Char]]::New(' '*$maxHoriz))
+    }
 
     # Note: we can create it there even with adaptive size, Lists being automatically resized
     $currentLine = 0
@@ -74,30 +86,25 @@ function Start-Matrix {
     if (!($NoClearBefore)) { Clear-Host }
 
     # Note: the label is necessary to break this precise loop from the nested loops
-    :mainLoop while ($true)
-    {
+    :mainLoop while ($true) {
         ## Check if a key was pressed ##
 
-        if ([Console]::KeyAvailable)
-        {
+        if ([Console]::KeyAvailable) {
             $keyInfo = [Console]::ReadKey($true) # Consume the pressed key
 
             # If the key was P, we pause
-            if($keyInfo.Key -eq 'P')
-            {
+            if ($keyInfo.Key -eq 'P') {
                 [Console]::SetCursorPosition($0,$maxVertic)
                 [Console]::Write('[Paused]')
                 # We wait for another P pressed to resume
                 while ($true)
                 {
-                    Start-Sleep -Milliseconds 100 # Pause for a bit to not overuse the processor
-                    if ([Console]::KeyAvailable)
-                    {
+                    [Threading.Thread]::Sleep(100) # Pause for a bit to not overuse the processor
+                    if ([Console]::KeyAvailable) {
                         $keyInfo = [Console]::ReadKey($true) # Consume the pressed key
 
-                        # IF it is P again, resume; else, exit
-                        if ($keyInfo.Key -eq 'P')
-                        {
+                        # If it is P again, resume; else, exit
+                        if ($keyInfo.Key -eq 'P') {
                             [Console]::SetCursorPosition(0,$maxVertic)
                             [Console]::Write(' '*8) # Erase the pause message
                             # Note: no need to replace the cursor since it is done before every writing
@@ -116,17 +123,15 @@ function Start-Matrix {
         ## Fill the line with characters or spaces ##
 
         # Loop through the columns
-        for ($j = 0; $j -lt $matrix[$currentLine].Count; $j++)
-        {
+        for ($j = 0; $j -lt $matrix[$currentLine].Count; $j++) {
             # si on est sur un caractère, on le garde ou l'enlève
-            if ($matrix[$currentLine][$j] -ne ' ')
-            {
+            if ($matrix[$currentLine][$j] -ne ' ') {
                 # Si la proba est trop basse, on enlève le char
-                if (!((Get-Random -Maximum 100) -lt $LeaveUntouchedChance))
-                {
+                if ($randomGen.Next(100) -ge $LeaveUntouchedChance) {
+                # if (!((Get-Random -Maximum 100) -lt $LeaveUntouchedChance))
+                # if ((Get-Random -Maximum 100) -ge $LeaveUntouchedChance)
                     $matrix[$currentLine][$j] = ' '
-                    if ($Multicolor)
-                    {
+                    if ($Multicolor) {
                         # Fails if the window is resized, so exit the loop
                         try {
                             [Console]::SetCursorPosition($j, $currentLine)
@@ -135,20 +140,21 @@ function Start-Matrix {
                             break
                         }
                         [Console]::CursorVisible = $false
-                        Write-Host ' ' -NoNewLine
+                        # Write-Host ' ' -NoNewLine
+                        [Console]::Write(' ')
                     }
                 }
-                # Else, do nothing
             }
-            else
-            {
+            else {
                 # If a character was above, we may stick another one to it; if there wasn't, we may drop one
-                if (($prevLine[$j] -ne ' ' -and (Get-Random -Maximum 100) -lt $StickChance) -or
-                    (Get-Random -Maximum 100) -lt $DropChance)
+                # if (($prevLine[$j] -ne ' ' -and (Get-Random -Maximum 100) -lt $StickChance) -or
+                #     (Get-Random -Maximum 100) -lt $DropChance)
+                if (($prevLine[$j] -ne ' ' -and $randomGen.Next(100) -lt $StickChance) -or
+                    $randomGen.Next(100) -lt $DropChance)
                 {
                     $charIsGood = $false
                     do {
-                        $uni = Get-Random -Minimum $MINUNICODE -Maximum $MAXUNICODE
+                        $uni = $randomGen.Next($MINUNICODE, $MAXUNICODE)
                         foreach ($interval in $supportedChars)
                         {
                             if ($uni -ge $interval[0] -and
@@ -158,11 +164,10 @@ function Start-Matrix {
                                 break # Note: exit only foreach loop
                             }
                         }
-                    } while (!($charIsGood))
+                    } until ($charIsGood)
 
                     $matrix[$currentLine][$j] = [char]$uni
-                    if ($Multicolor)
-                    {
+                    if ($Multicolor) {
                         # Fails if the window is resized, so exit the for loop
                         try {
                             [Console]::SetCursorPosition($j, $currentLine)
@@ -171,21 +176,26 @@ function Start-Matrix {
                             break
                         }
                         [Console]::CursorVisible = $false
-                        $randomColor = Get-Random -Minimum $colors[0] -Maximum ($colors[1] + 1)
-                        Write-Host "`e[38;5;${randomColor}m$($matrix[$currentLine][$j])" -NoNewLine # 38: foreground
+                        # $randomColor = Get-Random -Minimum $colors[0] -Maximum ($colors[1] + 1)
+
+                        # $randomColor = $randomGen.Next($colors[0], $colors[1] + 1)
+                        $randomColor = $randomColors[($j -bxor $currentLine -bor $uni) -band $randomColors.Count] # For randomness
+
+                        # Write-Host "`e[38;5;${randomColor}m$($matrix[$currentLine][$j])" -NoNewLine # 38: foreground
+                        # [Console]::Write("`e[38;5;${randomColor}m$($matrix[$currentLine][$j])`e[0m") # 38: foreground, 0: reset
+                        Write-Host "`e[38;5;${randomColor}m$($matrix[$currentLine][$j])`e[0m" -NoNewLine # 38: foreground, 0: reset
                     }
                     # Else, do nothing yet (the whole line is written afterwards)
                 }
             }
         }
 
-        if (!$Multicolor)
-        {
+        if (!$Multicolor) {
             # Fails if the window is resized, so don't Write if it does
             try {
                 [Console]::SetCursorPosition(0, $currentLine)
                 [Console]::CursorVisible = $false
-                Write-Host "$($matrix[$currentLine] -join '')" -Foreground $Color -NoNewLine # The entire line
+                Write-Host "$($matrix[$currentLine] -join '')" -Foreground $Color -NoNewLine # The entire line
             }
             catch [System.Management.Automation.MethodInvocationException] {
                 # Do nothing
@@ -196,60 +206,50 @@ function Start-Matrix {
         $prevLine = $matrix[$currentLine]
 
         # If the currentLine is 'in the middle' of the screen
-        if ($currentLine -ne ($maxVertic - 1))
-        {
+        if ($currentLine -ne ($maxVertic - 1)) {
             $currentLine++
         }
         # Else reset the currentLine to the top of the window
-        else
-        {
+        else {
             $currentLine = 0
             
             # If the window size is not the same as before
-            if (!$NoAdaptiveSize -and $WS -ne $Host.UI.RawUI.WindowSize)
-            {
+            if (!$NoAdaptiveSize -and $WS -ne $Host.UI.RawUI.WindowSize) {
                 $WS = $Host.UI.RawUI.WindowSize # The new size
 
                 $diffHeight = $WS.Height - $windowHeight
                 $diffWidth = $WS.Width - $windowWidth
 
                 # If the difference is positive, the window is taller so we add lines to the matrix
-                if ($diffHeight -gt 0)
-                {
+                if ($diffHeight -gt 0) {
                     # Add $diffHeight lines
-                    for ($i = 0; $i -lt $diffHeight; $i++)
-                    {
+                    for ($i = 0; $i -lt $diffHeight; $i++) {
                         $matrix.Add([Collections.Generic.List[Char]]::New(' '*$maxHoriz))
                         # Note: if Width changed too, the lines will be resized in the second `if`, so $maxHoriz is good
                     }
                 }
                 # Else there are less lines now, so we reduce the matrix
-                else
-                {
-                    $newHeight = $matrix.Count + $diffHeight # '+'' since $diffHeight is negative
+                else {
+                    $newHeight = $matrix.Count + $diffHeight # '+' since $diffHeight is negative
                     $end = [Math]::Abs($diffHeight)
                     # Remove $diffHeight lines
                     $matrix.RemoveRange($newHeight, $end) # truncate the list so the length is $newHeight
                 }
 
                 # If the difference is positive, the window is larger so we add columns to the matrix
-                if ($diffWidth -gt 0)
-                {
+                if ($diffWidth -gt 0) {
                     # Loop through the lines to add spaces
-                    for ($i = 0; $i -lt $matrix.Count; $i++)
-                    {
+                    for ($i = 0; $i -lt $matrix.Count; $i++) {
                         $matrix[$i].AddRange(' '*$diffWidth)
                     }
                 }
                 # Else there are less characters now, so we reduce the lines' length
-                else
-                {
-                    $newWidth = $matrix[0].Count + $diffWidth # '+'' since $diffWidth is negative
+                else {
+                    $newWidth = $matrix[0].Count + $diffWidth # '+' since $diffWidth is negative
                     $end = [Math]::Abs($diffWidth)
 
                     # Loop through the lines to remove characters
-                    for ($i = 0; $i -lt $matrix.Count; $i++)
-                    {
+                    for ($i = 0; $i -lt $matrix.Count; $i++) {
                         $matrix[$i].RemoveRange($newWidth, $end) # truncate the list so the length is $newWidth
                     }
                 }                
@@ -261,7 +261,7 @@ function Start-Matrix {
             }
         }
 
-        Start-Sleep -Milliseconds $SleepTime
+        [Threading.Thread]::Sleep($SleepTime)
     }
     
     ## After the mainLoop ##

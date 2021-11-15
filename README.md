@@ -34,6 +34,7 @@ A Powershell implementation of the Matrix effect.
 - `Start-Matrix -DropChance 1 -StickChance 60 -Leave 75`
 - `Start-Matrix -DropChance 1 -StickChance 60 -Untouched 65 -Multicolor`
 - `Start-Matrix -SleepTime 100 -DropChance 1 -StickChance 80 -LeaveUntouchedChance 60`
+- `Start-Matrix -SleepTime 0` (default parameters, but full speed)
 
 ## Changelog
 - **v1.0**: Initial release
@@ -51,6 +52,7 @@ A Powershell implementation of the Matrix effect.
 - v2.01: Fixes issue #1
 - v2.02: Balanced the default parameters a little
 - v2.03: Fixed error for PowerShell 5
+- v2.04: Improved speed for `-SleepTime 0`; code now fits the OTBS good practice
 
 ## Example of execution
 https://user-images.githubusercontent.com/71087433/114935043-fc1d4300-9e3a-11eb-9b21-f8fc38101f33.mov
